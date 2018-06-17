@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from ml.recommend import recommend
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
-
+CORS(app)
 
 @app.route("/api/recommend", methods=["POST"])
 def make_recommendation():
