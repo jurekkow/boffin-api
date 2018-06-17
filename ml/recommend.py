@@ -33,9 +33,37 @@ def make_recommendation(listener):
     return scores
 
 
+def get_artist_tags(artist):
+    tags = next(
+        a["tags"]
+        for fest in fests
+        for a in fest["artists"] if a["name"] == artist
+    )
+    tags = [tag for tag in tags if tag not in ["seen live", "polish"]]
+    return tags
+
+
+def score_by_tags(chosen_artists, score_factor=0.01):
+    tag_table = joblib.load(paths.TAG_TABLE_FILE_PATH)
+    tag_table.fillna(0, inplace=True)
+    user_tags = pd.Series(0, index=tag_table.columns)
+    for chosen_artist in chosen_artists:
+        tags = get_artist_tags(chosen_artist)
+        user_tags[tags] += 1
+
+    tag_table_2018 = tag_table.loc[artists_2018, :]
+    tag_scores = tag_table_2018.dot(user_tags) * score_factor
+    tag_scores.fillna(0, inplace=True)
+    return tag_scores
+
+
 def recommend(chosen_artists):
     listener = get_listener_row(chosen_artists)
     scores = make_recommendation(listener)
+
+    tag_scores = score_by_tags(chosen_artists)
+    scores += tag_scores
+
     scores = pd.Series.sort_values(scores, ascending=False)
     scores_dict = scores.to_dict(OrderedDict)
     return scores_dict
