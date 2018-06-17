@@ -1,11 +1,13 @@
 import itertools
 import json
 import traceback
+import os
 
 import pandas as pd
 import requests
 
 from bs4 import BeautifulSoup
+from sklearn.externals import joblib
 
 import paths
 
@@ -95,7 +97,7 @@ def get_scrobbled_fest_artists(attendee, fest_artists):
     artist_data = response.json()["topartists"]
     artists = {artist["name"]: artist["playcount"]
                for artist in artist_data["artist"]}
-    scrobbled_fest_artist = {artist: playcount
+    scrobbled_fest_artist = {artist: int(playcount)
                              for artist, playcount in artists.items()
                              if artist in fest_artists}
     return scrobbled_fest_artist
@@ -105,24 +107,37 @@ def build_scrobble_table(fests):
     artists = list(
         {artist for fest in fests for artist in fest["artists"]}
     )
-    attendees = list(
-        {attendee for fest in fests
-         for attendee in get_fest_attendees(fest["url"])}
+    atendees = load_or_download(
+        path=paths.ATENDEES_BACKUP_FILE_PATH,
+        download_data=lambda: list(
+                {attendee for fest in fests
+                for attendee in get_fest_attendees(fest["url"])}
+            ),
+        title="atendees"
     )
-    print("Downloaded fest atendees")
-    scrobble_table = pd.DataFrame(index=artists, columns=attendees)
-    for i, attendee in enumerate(attendees, start=1):
+    
+    if os.path.exists(paths.SCROBBLES_BACKUP_FILE_PATH):
+        scrobble_table = joblib.load(paths.SCROBBLES_BACKUP_FILE_PATH)
+    else:
+        scrobble_table = pd.DataFrame(index=artists, columns=atendees)
+
+    downloaded_atendees = set(scrobble_table.columns[scrobble_table.sum() > 0])
+    print("Got laready {} atendees".format(len(downloaded_atendees)))
+    atendees_to_download = set(atendees).difference(set(downloaded_atendees))
+
+    print("Will download data for {} users".format(len(atendees_to_download)))
+    for i, attendee in enumerate(atendees_to_download, start=1):
         print("Downloading data for user {}... ({}%)".format(
-            attendee, 100 * i / len(attendees)))
+            attendee, 100 * i / len(atendees_to_download)))
         try:
             scrobbled_artists = get_scrobbled_fest_artists(attendee, artists)
             if scrobbled_artists:
                 scrobble_table[attendee] = pd.Series(scrobbled_artists)
-            else:
+            elif attendee in scrobble_table:
                 del scrobble_table[attendee]
         except:
-            print("FAILED")
-            traceback.print_exc()
+            joblib.dump(scrobble_table, paths.SCROBBLES_BACKUP_FILE_PATH)
+            raise
         else:
             print("OK")
 
@@ -159,14 +174,33 @@ def add_artists_details(fest):
     return fest
 
 
+def load_or_download(path, download_data, title, dump=True):
+    if os.path.exists(path):
+        print("Trying to open {} backup file...".format(title))
+        with open(path) as backup_file:
+            data = json.load(backup_file)
+    else:
+        print("No {} backup file".format(title))
+        print("Downloading {} data...".format(title))
+        data = download_data()
+
+        if dump:
+            with open(path, "w") as backup_file:
+                json.dump(data, backup_file)
+    print("Done!")
+    return data
+
+
 def main():
     print("Loading fest URL's...")
     fest_urls = load_fest_urls()
     print("Done!")
 
-    print("Downloading fest data...")
-    fests = [get_fest_data(url) for url in fest_urls]
-    print("Done!")
+    fests = load_or_download(
+        path=paths.FESTS_BACKUP_FILE_PATH,
+        download_data=lambda: [get_fest_data(url) for url in fest_urls],
+        title="fests"
+    )
 
     print("Building scrobble table...")
     scrobble_table = build_scrobble_table(fests)
@@ -185,6 +219,10 @@ def main():
         json.dump(fests, fests_file)
     print("Done!")
 
+    print("Removing backup files")
+    os.remove(paths.FESTS_BACKUP_FILE_PATH)
+    os.remove(paths.ATENDEES_BACKUP_FILE_PATH)
+    os.remove(paths.SCROBBLES_BACKUP_FILE_PATH)
 
 if __name__ == "__main__":
     main()
