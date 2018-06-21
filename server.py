@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+import timetable
 from ml.recommend import recommend
 
 app = Flask(__name__)
@@ -12,6 +13,12 @@ def make_recommendation():
     data = request.json
     response = recommend(data["chosenArtists"])
     return jsonify({"recommendation": response})
+
+
+@app.route("/api/timetable", methods=["GET"])
+def get_timetable():
+    current_timetable = timetable.get_current_timetable()
+    return jsonify(current_timetable)
 
 
 if __name__ == '__main__':
