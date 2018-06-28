@@ -44,7 +44,7 @@ def create_blank_boffin_timetable():
 
 def add_event_data(boffin_timetable, clashfinder_timetable):
     for location in clashfinder_timetable["locations"]:
-        stage = location["name"]
+        stage = location["name"].strip()
         for event in location["events"]:
             week_day = get_week_day(event["start"])
             event_data = {
