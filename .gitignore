@@ -1,0 +1,7 @@
+*/__pycache__
+
+data/similarities
+data/tag_table
+
+*.pyc
+
