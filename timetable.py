@@ -15,9 +15,9 @@ WEEK_DAYS = {
     6: "sunday"
 }
 FEST_DAYS = [
-    ("friday", "03.08"),
-    ("saturday", "04.08"),
-    ("sunday", "05.08"),
+    ("friday", "2018-08-03"),
+    ("saturday", "2018-08-04"),
+    ("sunday", "2018-08-05"),
 ]
 DAY_END_HOUR = 5
 HTTP_OK = 200
