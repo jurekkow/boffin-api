@@ -7,7 +7,7 @@ import paths
 from sklearn.externals import joblib
 
 
-if __name__ == "__main__":
+def build():
     with open(paths.FESTS_FILE_PATH) as fests_file:
         fests = json.load(fests_file)
 
@@ -18,3 +18,8 @@ if __name__ == "__main__":
                 tag_table.loc[artist["name"], tag] = 1
 
     joblib.dump(tag_table, paths.TAG_TABLE_FILE_PATH)
+
+
+if __name__ == "__main__":
+    build()
+

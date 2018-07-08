@@ -33,7 +33,7 @@ def get_artist_similarities(listeners):
     return artist_similarities
 
 
-def main():
+def train():
     listeners = load_listeners(paths.SCROBBLES_FILE_PATH)
     listeners = normalize_listeners(listeners)
     artist_similarities = get_artist_similarities(listeners)
@@ -41,4 +41,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    train()
