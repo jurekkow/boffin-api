@@ -50,5 +50,6 @@ def recommend(chosen_artists):
     scores += tag_scores
 
     scores = pd.Series.sort_values(scores, ascending=False)
+    scores.index = [artist.lower() for artist in scores.index]
     scores_dict = scores.to_dict(OrderedDict)
     return scores_dict
