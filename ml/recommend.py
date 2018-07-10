@@ -8,6 +8,8 @@ from collections import OrderedDict
 
 from sklearn.externals import joblib
 
+from datautils.names import normalize_artist
+
 
 artist_similarities = joblib.load(paths.MODEL_FILE_PATH)
 with open(paths.FESTS_FILE_PATH) as fests_json_file:
@@ -50,6 +52,7 @@ def recommend(chosen_artists):
     scores += tag_scores
 
     scores = pd.Series.sort_values(scores, ascending=False)
-    scores.index = [artist.lower() for artist in scores.index]
+    scores /= scores.max()
+    scores.index = [normalize_artist(artist) for artist in scores.index]
     scores_dict = scores.to_dict(OrderedDict)
     return scores_dict

@@ -7,6 +7,7 @@ import requests
 import requests.exceptions
 
 import paths
+from datautils.names import normalize_artist
 
 TIMETABLE_URL = "https://clashfinder.com/data/event/offfestival2018.json"
 WEEK_DAYS = {
@@ -49,7 +50,7 @@ def get_week_day(date_time):
 
 
 def get_artist_name(event_name):
-    event_name = event_name.strip().lower()
+    event_name = normalize_artist(event_name)
     artist_plays_album_pattern = re.compile(
         r"(?P<artist>.*) (gra|grają) (?P<album>.*)"
     )
