@@ -10,6 +10,11 @@ app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 CORS(app)
 
+@app.route("/", methods=["GET"])
+def home():
+    return "Boffin API is up!"
+
+
 @app.route("/api/recommend", methods=["POST"])
 def make_recommendation():
     data = request.json
